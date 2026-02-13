@@ -112,51 +112,63 @@ Thank you for banking with us.
   }
 };
 
-const sendTransactionEmailFailure = async ({
+const sendCreditEmail = async ({
   email,
   fullName,
   amount,
-  toAccount
+  fromAccount,
+  transactionId
 }) => {
-  const subject = '❌ Transaction Failed | Bank of Javed';
-
-  const text = `
-Hi ${fullName},
-
-Unfortunately, your transaction could not be completed.
-
-Amount: ₹${amount}
-To Account: ${toAccount}
-
-Please try again later or contact support.
-– Bank of Javed Support Team
-`;
-
-  const html = `
-<div style="font-family: Arial, sans-serif; line-height:1.5; color:#333;">
-  <h2>Hi ${fullName} 👋</h2>
-
-  <p>
-    Your transaction 
-    <strong style="color:red;">failed</strong>.
-  </p>
-
-  <p>
-    <strong>Amount:</strong> ₹${amount}<br/>
-    <strong>To Account:</strong> ${toAccount}
-  </p>
-
-  <p>Please try again or reach out to our support team.</p>
-  <p><strong>Bank of Javed Support Team</strong></p>
-</div>
-`;
-
   try {
-    await sendEmail(email, subject, text, html);
-    console.log(`Transaction failure email sent to ${email}`);
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // or use SMTP config
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const mailOptions = {
+      from: `"Your Bank" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "💰 Amount Credited Successfully",
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2 style="color: green;">Amount Credited</h2>
+          
+          <p>Dear <strong>${fullName}</strong>,</p>
+          
+          <p>We are pleased to inform you that an amount of 
+          <strong>₹${amount}</strong> has been successfully credited to your account.</p>
+          
+          ${
+            fromAccount
+              ? `<p><strong>From Account:</strong> ${fromAccount}</p>`
+              : ""
+          }
+
+          ${
+            transactionId
+              ? `<p><strong>Transaction ID:</strong> ${transactionId}</p>`
+              : ""
+          }
+
+          <p>If you did not authorize this transaction, please contact support immediately.</p>
+
+          <br/>
+
+          <p>Thank you for banking with us.</p>
+          <p><strong>Your Bank Team</strong></p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    console.log("Credit email sent successfully");
   } catch (error) {
-    console.error(`Error sending failure email to ${email}:`, error);
+    console.error("Error sending credit email:", error.message);
   }
 };
-
-export { sendRegistrationEmail, sendTransactionEmail, sendTransactionEmailFailure };
+  
+export { sendRegistrationEmail, sendTransactionEmail, sendCreditEmail };

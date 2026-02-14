@@ -25,7 +25,6 @@ const userSchema = new mongoose.Schema(
 
   mobile: {
     type: String,
-    // unique: true,
     match: [
       /^[6-9]\d{9}$/,
       "Please provide a valid Indian mobile number"
@@ -39,30 +38,21 @@ const userSchema = new mongoose.Schema(
     select: false   
   },
 
-//   role: {
-//     type: String,
-//     enum: {
-//       values: ["USER", "ADMIN"],
-//       message: "Role must be USER or ADMIN"
-//     },
-//     default: "USER"
-//   },
-
   isActive: {
     type: Boolean,
     default: true
   },
+
   systemUser: {
     type: Boolean,
     default: false,
     immutable: true,
     select: false 
-    
   }
 }, { timestamps: true }
 );
 
-userSchema.pre("save", async function(next) {
+userSchema.pre("save", async function() {
   if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 10);
   return;

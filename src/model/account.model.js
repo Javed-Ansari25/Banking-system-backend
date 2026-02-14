@@ -13,8 +13,7 @@ const accountSchema = new mongoose.Schema(
       type: String,
       enum: ["USER", "SYSTEM"],
       default: "USER"
- },
-
+   },
 
     status: {
       type: String,
@@ -66,7 +65,7 @@ accountSchema.methods.getBalance = async function () {
       $project: {
         _id: 0,
         balance: {
-          $subtract: ["$totalCredit", "$totalDebit"] // ✅ FIXED
+          $subtract: ["$totalCredit", "$totalDebit"] // FIXED
         }
       }
     }

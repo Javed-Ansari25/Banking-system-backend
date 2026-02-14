@@ -3,6 +3,8 @@ import { ApiError } from "../utils/apiError.utils.js";
 import { ApiResponse } from "../utils/apiResponse.utils.js";
 import { asyncHandler } from "../utils/asyncHandler.utils.js";
 import { sendRegistrationEmail } from "../services/email.services.js";
+import { BlacklistedToken } from "../model/blacklistedToken.model.js";
+import jwt from "jsonwebtoken"
 
 const register = asyncHandler(async (req, res) => {
     const { email, password, fullName, mobile } = req.body;
@@ -87,18 +89,27 @@ const login = asyncHandler(async (req, res) => {
 });
 
 const logout = asyncHandler(async (req, res) => {
-    const cookieOptions = {
-        httpOnly: true,
-        secure: true,
-        sameSite: "strict",
-    };
+  const decoded = jwt.decode(req.token); // verify nahi, sirf decode
 
-    return res
-        .status(200)
-        .clearCookie("token", cookieOptions)
-        .json(
-            new ApiResponse(200, {}, "User logout successfully")
-        );
+  if (!decoded?.exp) {
+    throw new ApiError(400, "Invalid token expiry");
+  }
+
+  await BlacklistedToken.create({
+    token: req.token,
+    expiresAt: new Date(decoded.exp * 1000),
+  });
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+  };
+
+  return res
+    .status(200)
+    .clearCookie("token", cookieOptions)
+    .json(new ApiResponse(200, {}, "User logout successfully"));
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
